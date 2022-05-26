@@ -19,7 +19,6 @@ bitvec = { version = "1.0.0", default-features = false, features=["alloc"]}
 ssz-rs-derive = { path = "../ssz-rs-derive"}
 sha2 = { version ="0.9.8", default-features = false}
 lazy_static = { version = "1.4.0", features=["spin_no_std"]}
-num-bigint = "0.4.3"
 
 [dev-dependencies]
 hex-literal = "0.3.3"
@@ -33,7 +32,6 @@ std = [
     "bitvec/std",
     "sha2/std",
     "lazy_static/spin",
-    "num-bigint/std",
 ]
 serde-rs = [
 ]

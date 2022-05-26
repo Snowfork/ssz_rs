@@ -3,7 +3,6 @@ use crate::merkleization::{pack_bytes, MerkleizationError, Merkleized, Node};
 use crate::ser::{Serialize, SerializeError};
 use crate::{SimpleSerialize, Sized};
 use crate::std::{Vec, vec, Debug, Default, TryInto};
-use num_bigint::BigUint;
 
 macro_rules! define_uint {
     ($uint:ty) => {
@@ -64,74 +63,6 @@ define_uint!(u32);
 define_uint!(u64);
 define_uint!(u128);
 define_uint!(usize);
-
-#[derive(Default, Debug, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
-pub struct U256(BigUint);
-
-impl U256 {
-    pub fn new() -> Self {
-        Self(BigUint::default())
-    }
-
-    pub fn try_from_bytes_le(bytes: &[u8]) -> Result<Self, DeserializeError> {
-        Self::deserialize(bytes)
-    }
-
-    pub fn from_bytes_le(bytes: [u8; 32]) -> Self {
-        Self::deserialize(&bytes).unwrap()
-    }
-
-    pub fn to_bytes_le(&self) -> Vec<u8> {
-        let mut bytes = self.0.to_bytes_le();
-        bytes.resize(32, 0u8);
-        bytes
-    }
-}
-
-impl Sized for U256 {
-    fn is_variable_size() -> bool {
-        false
-    }
-
-    fn size_hint() -> usize {
-        32
-    }
-}
-
-impl Serialize for U256 {
-    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SerializeError> {
-        buffer.extend_from_slice(&self.to_bytes_le());
-        Ok(32)
-    }
-}
-
-impl Deserialize for U256 {
-    fn deserialize(encoding: &[u8]) -> Result<Self, DeserializeError> {
-        if encoding.len() < 32 {
-            return Err(DeserializeError::InputTooShort);
-        }
-        if encoding.len() > 32 {
-            return Err(DeserializeError::ExtraInput);
-        }
-
-        let value = BigUint::from_bytes_le(&encoding[..32]);
-        Ok(Self(value))
-    }
-}
-
-impl Merkleized for U256 {
-    fn hash_tree_root(&mut self) -> Result<Node, MerkleizationError> {
-        Ok(Node::from_bytes(
-            self.to_bytes_le().try_into().expect("works"),
-        ))
-    }
-}
-
-impl SimpleSerialize for U256 {
-    fn is_composite_type() -> bool {
-        false
-    }
-}
 
 #[cfg(test)]
 mod tests {

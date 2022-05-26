@@ -28,7 +28,6 @@ pub use de::{Deserialize, DeserializeError};
 pub use list::List;
 pub use merkleization::{Context as MerkleizationContext, MerkleizationError, Merkleized, Node};
 pub use ser::{Serialize, SerializeError};
-pub use uint::U256;
 
 /// `Sized` is a trait for types that can
 /// provide sizing information relevant for the SSZ spec.
@@ -92,7 +91,6 @@ pub mod prelude {
         Merkleized, Node,
     };
     pub use crate::ser::{Serialize, SerializeError};
-    pub use crate::uint::U256;
     pub use crate::vector::Vector;
     pub use crate::MerkleizationContext;
     pub use crate::SimpleSerialize;
