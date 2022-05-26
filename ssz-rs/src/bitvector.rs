@@ -20,36 +20,6 @@ type BitvectorInner = BitVec<u8, Lsb0>;
 #[derive(PartialEq, Eq, Clone)]
 pub struct Bitvector<const N: usize>(BitvectorInner);
 
-#[cfg(feature = "serde-rs")]
-impl<const N: usize> serde::Serialize for Bitvector<N> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut buf = Vec::with_capacity((N + 7) / 8);
-        let _ = crate::Serialize::serialize(self, &mut buf).map_err(serde::ser::Error::custom)?;
-        let encoding = hex::encode(buf);
-        let output = format!("0x{encoding}");
-        serializer.collect_str(&output)
-    }
-}
-
-#[cfg(feature = "serde-rs")]
-impl<'de, const N: usize> serde::Deserialize<'de> for Bitvector<N> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = <String>::deserialize(deserializer)?;
-        if s.len() < 2 {
-            return Err(serde::de::Error::custom(DeserializeError::InputTooShort));
-        }
-        let bytes = hex::decode(&s[2..]).map_err(serde::de::Error::custom)?;
-        let value = crate::Deserialize::deserialize(&bytes).map_err(serde::de::Error::custom)?;
-        Ok(value)
-    }
-}
-
 impl<const N: usize> fmt::Debug for Bitvector<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "Bitvector<{}>[", N)?;

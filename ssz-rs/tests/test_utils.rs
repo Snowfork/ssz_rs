@@ -1,4 +1,3 @@
-use hex;
 use project_root;
 use snap;
 use ssz_rs::prelude::*;
@@ -6,14 +5,6 @@ use std::convert::TryInto;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-
-pub fn root_from_hex(hex_str: &str) -> Node {
-    hex::decode(hex_str)
-        .expect("can read hex")
-        .as_slice()
-        .try_into()
-        .expect("can extract root")
-}
 
 pub fn serialize<T: SimpleSerialize>(value: &T) -> Vec<u8> {
     ssz_rs::serialize(value).expect("can serialize")

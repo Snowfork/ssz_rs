@@ -6,10 +6,6 @@ use crate::merkleization::{
 use crate::ser::{serialize_composite, Serialize, SerializeError};
 use crate::{SimpleSerialize, Sized};
 use crate::std::{Enumerate, FromIterator, vec, Vec, fmt, SliceIndex, Deref, Index, IndexMut, IterMut as StdIterMut, Debug, Display, Formatter};
-#[cfg(feature = "serde-rs")]
-use serde::ser::SerializeSeq;
-#[cfg(feature = "serde-rs")]
-use std::marker::PhantomData;
 
 pub enum ListError {
     IncorrectLength { expected: usize, provided: usize }, // elements given that exceeds the list bound of
@@ -32,53 +28,6 @@ impl Display for ListError {
 pub struct List<T: SimpleSerialize, const N: usize> {
     data: Vec<T>,
     cache: MerkleCache,
-}
-
-// TODO clean up impls here for Vector and List...
-#[cfg(feature = "serde-rs")]
-impl<T: SimpleSerialize + serde::Serialize, const N: usize> serde::Serialize for List<T, N> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut seq = serializer.serialize_seq(Some(N))?;
-        for element in &self.data {
-            seq.serialize_element(element)?;
-        }
-        seq.end()
-    }
-}
-
-#[cfg(feature = "serde-rs")]
-struct ListVisitor<T: SimpleSerialize>(PhantomData<Vec<T>>);
-
-#[cfg(feature = "serde-rs")]
-impl<'de, T: SimpleSerialize + serde::Deserialize<'de>> serde::de::Visitor<'de> for ListVisitor<T> {
-    type Value = Vec<T>;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("array of objects")
-    }
-
-    fn visit_seq<S>(self, visitor: S) -> Result<Self::Value, S::Error>
-    where
-        S: serde::de::SeqAccess<'de>,
-    {
-        serde::Deserialize::deserialize(serde::de::value::SeqAccessDeserializer::new(visitor))
-    }
-}
-
-#[cfg(feature = "serde-rs")]
-impl<'de, T: SimpleSerialize + serde::de::Deserialize<'de>, const N: usize> serde::Deserialize<'de>
-    for List<T, N>
-{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let data = deserializer.deserialize_seq(ListVisitor(PhantomData))?;
-        List::<T, N>::try_from(data).map_err(serde::de::Error::custom)
-    }
 }
 
 impl<T: SimpleSerialize, const N: usize> AsRef<[T]> for List<T, N> {
