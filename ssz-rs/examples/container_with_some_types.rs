@@ -14,7 +14,7 @@ impl Default for Bar {
 }
 
 #[derive(PartialEq, Eq, Debug, Default, SimpleSerialize)]
-struct Foo<const N: usize> {
+struct Foo<const N: u64> {
     a: u32,
     b: Vector<u32, 4>,
     c: bool,

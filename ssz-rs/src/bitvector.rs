@@ -18,15 +18,15 @@ type BitvectorInner = BitVec<u8, Lsb0>;
 ///
 /// Refer: <https://stackoverflow.com/a/65462213>
 #[derive(PartialEq, Eq, Clone)]
-pub struct Bitvector<const N: usize>(BitvectorInner);
+pub struct Bitvector<const N: u64>(BitvectorInner);
 
 #[cfg(feature = "serde-rs")]
-impl<const N: usize> serde::Serialize for Bitvector<N> {
+impl<const N: u64> serde::Serialize for Bitvector<N> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let mut buf = Vec::with_capacity((N + 7) / 8);
+        let mut buf = Vec::with_capacity(((N + 7) / 8) as usize);
         let _ = crate::Serialize::serialize(self, &mut buf).map_err(serde::ser::Error::custom)?;
         let encoding = hex::encode(buf);
         let output = format!("0x{encoding}");
@@ -35,7 +35,7 @@ impl<const N: usize> serde::Serialize for Bitvector<N> {
 }
 
 #[cfg(feature = "serde-rs")]
-impl<'de, const N: usize> serde::Deserialize<'de> for Bitvector<N> {
+impl<'de, const N: u64> serde::Deserialize<'de> for Bitvector<N> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -50,7 +50,7 @@ impl<'de, const N: usize> serde::Deserialize<'de> for Bitvector<N> {
     }
 }
 
-impl<const N: usize> fmt::Debug for Bitvector<N> {
+impl<const N: u64> fmt::Debug for Bitvector<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "Bitvector<{}>[", N)?;
         let len = self.len();
@@ -68,14 +68,14 @@ impl<const N: usize> fmt::Debug for Bitvector<N> {
     }
 }
 
-impl<const N: usize> Default for Bitvector<N> {
+impl<const N: u64> Default for Bitvector<N> {
     fn default() -> Self {
         assert!(N > 0);
-        Self(BitVec::repeat(false, N))
+        Self(BitVec::repeat(false, N as usize))
     }
 }
 
-impl<const N: usize> Bitvector<N> {
+impl<const N: u64> Bitvector<N> {
     /// Return the bit at `index`. `None` if index is out-of-bounds.
     pub fn get(&mut self, index: usize) -> Option<bool> {
         self.0.get(index).map(|value| *value)
@@ -99,7 +99,7 @@ impl<const N: usize> Bitvector<N> {
     }
 }
 
-impl<const N: usize> Deref for Bitvector<N> {
+impl<const N: u64> Deref for Bitvector<N> {
     type Target = BitvectorInner;
 
     fn deref(&self) -> &Self::Target {
@@ -107,26 +107,26 @@ impl<const N: usize> Deref for Bitvector<N> {
     }
 }
 
-impl<const N: usize> DerefMut for Bitvector<N> {
+impl<const N: u64> DerefMut for Bitvector<N> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<const N: usize> Sized for Bitvector<N> {
+impl<const N: u64> Sized for Bitvector<N> {
     fn is_variable_size() -> bool {
         false
     }
 
     fn size_hint() -> usize {
-        (N + 7) / 8
+        ((N + 7) / 8) as usize
     }
 }
 
-impl<const N: usize> Serialize for Bitvector<N> {
+impl<const N: u64> Serialize for Bitvector<N> {
     fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SerializeError> {
         if N == 0 {
-            return Err(SerializeError::IllegalType { bound: N });
+            return Err(SerializeError::IllegalType { bound: N as usize });
         }
         let bytes_to_write = Self::size_hint();
         buffer.reserve(bytes_to_write);
@@ -137,13 +137,13 @@ impl<const N: usize> Serialize for Bitvector<N> {
     }
 }
 
-impl<const N: usize> Deserialize for Bitvector<N> {
+impl<const N: u64> Deserialize for Bitvector<N> {
     fn deserialize(encoding: &[u8]) -> Result<Self, DeserializeError> {
         if N == 0 {
-            return Err(DeserializeError::IllegalType { bound: N });
+            return Err(DeserializeError::IllegalType { bound: N as usize });
         }
 
-        let expected_length = (N + 7) / 8;
+        let expected_length = ((N + 7) / 8) as usize;
         if encoding.len() < expected_length {
             return Err(DeserializeError::InputTooShort);
         }
@@ -167,16 +167,16 @@ impl<const N: usize> Deserialize for Bitvector<N> {
     }
 }
 
-impl<const N: usize> Merkleized for Bitvector<N> {
+impl<const N: u64> Merkleized for Bitvector<N> {
     fn hash_tree_root(&mut self) -> Result<Node, MerkleizationError> {
         let chunks = self.pack_bits()?;
-        merkleize(&chunks, Some((N + 255) / 256))
+        merkleize(&chunks, Some(((N + 255) / 256) as usize))
     }
 }
 
-impl<const N: usize> SimpleSerialize for Bitvector<N> {}
+impl<const N: u64> SimpleSerialize for Bitvector<N> {}
 
-impl<const N: usize> FromIterator<bool> for Bitvector<N> {
+impl<const N: u64> FromIterator<bool> for Bitvector<N> {
     // NOTE: only takes the first `N` values from `iter` and
     // uses the default `false` for missing values.
     fn from_iter<I>(iter: I) -> Self
@@ -186,7 +186,7 @@ impl<const N: usize> FromIterator<bool> for Bitvector<N> {
         assert!(N > 0);
 
         let mut result: Bitvector<N> = Default::default();
-        for (index, bit) in iter.into_iter().enumerate().take(N) {
+        for (index, bit) in iter.into_iter().enumerate().take(N as usize) {
             result.set(index, bit);
         }
         result
@@ -198,7 +198,7 @@ mod tests {
     use super::*;
     use crate::serialize;
 
-    const COUNT: usize = 12;
+    const COUNT: u64 = 12;
 
     #[test]
     fn encode_bitvector() {
