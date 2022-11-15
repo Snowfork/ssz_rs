@@ -73,6 +73,10 @@ impl U256 {
         Self(BigUint::default())
     }
 
+    pub fn zero() -> Self {
+        Self::default()
+    }
+
     pub fn try_from_bytes_le(bytes: &[u8]) -> Result<Self, DeserializeError> {
         Self::deserialize(bytes)
     }
@@ -85,6 +89,12 @@ impl U256 {
         let mut bytes = self.0.to_bytes_le();
         bytes.resize(32, 0u8);
         bytes
+    }
+}
+
+impl From<u64> for U256 {
+    fn from(x: u64) -> Self {
+        Self(x.into())
     }
 }
 
